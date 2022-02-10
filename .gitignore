@@ -3,3 +3,6 @@ build/
 
 # VS Code config
 .vscode
+
+# Test script file
+test.sh

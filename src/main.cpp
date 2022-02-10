@@ -1,29 +1,60 @@
-#include <pcap/pcap.h>
+#include "./headers/includes.h"
+#include "./headers/sniffer.h"
 
-#include <iostream>
+/*TODO:
+    1. Create a sniffer class
+    2. Start sniffing an arbitrary packet
+    3. Parse Packet data
+    4. Add option in Sniffer class structure for number of packets to be parsed
+    4. Add options for flags
+*/
 
-int main(int argc, char* argv[]) {
-    pcap_if_t* head;
-    char errbuf[PCAP_ERRBUF_SIZE];
+/* Function to copy char pointer into the passed string */
+void CopyArg(std::string& param, char* arg) {
+    char* ch = arg;
+    while (*ch != '\0') {
+        param.push_back(*ch);
+        ch++;
+    }
+}
 
-    int status = pcap_findalldevs(&head, errbuf);
-    if (status != 0) {
-        std::cerr << "Some error occured while finding the devices.\n";
+/* Function to parse command line options and return an object of Sniffer class */
+Sniffer ParseCommand(int argc, char* argv[]) {
+    if (argc < 2) {
+        std::cerr << "Please enter options and try again.\n";
         exit(1);
     }
 
-    pcap_if_t* ptr = head;
-    while (ptr) {
-        std::cout << "Name of device is ";
-        puts(ptr->name);
+    std::string device;
+    std::string filter;
 
-        if (ptr->description) {
-            puts(ptr->description);
-        } else {
-            std::cout << "Device description not available.\n";
+    for (int i = 1; i < argc; i++) {
+        /* Check for arguments */
+        char* ch = argv[i];
+        if (*ch == '-') {
+            /* Check whether device argument or filter argument */
+            char arg = *(ch + 1);
+            if (arg == DEVICE_ARG) {
+                CopyArg(device, argv[i + 1]);
+                i++;
+            }
         }
-        ptr = ptr->next;
     }
+
+    /* Create an object of the sniffer class */
+    Sniffer sniffer;
+    sniffer.SetDeviceName(device);
+
+    return sniffer;
+}
+
+int main(int argc, char* argv[]) {
+    Sniffer sniffer = ParseCommand(argc, argv);
+    sniffer.Open();
+
+    sniffer.Read();
+
+    sniffer.Close();
 
     return 0;
 }
