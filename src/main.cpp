@@ -2,11 +2,8 @@
 #include "./headers/sniffer.h"
 
 /*TODO:
-    1. Create a sniffer class
-    2. Start sniffing an arbitrary packet
-    3. Parse Packet data
-    4. Add option in Sniffer class structure for number of packets to be parsed
-    4. Add options for flags
+    1. Parse Packet headers
+    2. Parse Packet payload
 */
 
 /* Function to copy char pointer into the passed string */

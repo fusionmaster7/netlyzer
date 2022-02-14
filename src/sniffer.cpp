@@ -55,21 +55,27 @@ void Sniffer::Close() {
 }
 
 void PacketHandler(u_char* args, const pcap_pkthdr* header, const u_char* packet) {
-    ether_header* eth = (ether_header*)packet;
-
     /* Typecast the value of args from u_char to u_int */
     uint* packet_count = reinterpret_cast<uint*>(args);
     (*packet_count)++;
-    std::cout << "Packet number " << *(packet_count) << " read:\n";
+    std::cout << "Packet number " << *(packet_count) << ":\n\n";
 
-    std::cout << "Source MAC address is " << ConvertToHexadecimal(eth->ether_shost, ETH_ALEN) << "\n";
-    std::cout << "Destination MAC address is " << ConvertToHexadecimal(eth->ether_dhost, ETH_ALEN) << "\n";
+    /* Parse Ethernet header */
+    EthernetLayerFilter eth;
+    eth.Parse(packet, 0);
 
-    std::cout << "\n";
+    /* Print Ethernet Header */
+    eth.Print();
 
-    if (BtoHex2(eth->ether_type) == ETHERTYPE_IP) {
-        std::cout << "Ethertype is IPv4"
-                  << "\n";
+    /* Parse IP Layer header */
+    NetworkLayerFilter ip;
+    ip.Parse(packet, sizeof(ether_header));
+
+    /* Print Network Header */
+    ip.Print();
+
+    if (*packet_count < PACKET_COUNT) {
+        PrintSeperator('-', GetTerminalWidth());
     }
 }
 
@@ -80,6 +86,8 @@ void Sniffer::Read() {
 
     /* Typecast to pass as args in the callback function */
     u_char* args = reinterpret_cast<u_char*>(packet_count_ptr);
+
+    /* Read the specified packets on the opened device and call the handler on each of them */
     pcap_loop(this->device_sniffer_, PACKET_COUNT, PacketHandler, args);
 
     PrintSeperator('-', GetTerminalWidth());

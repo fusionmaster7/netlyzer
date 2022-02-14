@@ -2,11 +2,11 @@
 #ifndef SNIFFER_H
 #define SNIFFER_H
 
-#include "network_structures.h"
+#include "network_filters.h"
 #include "utils.h"
 
 /* Number of packets to be read */
-const int PACKET_COUNT = 10;
+const int PACKET_COUNT = 1;
 
 class Sniffer {
    private:

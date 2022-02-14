@@ -3,6 +3,7 @@
 #define INCLUDES_H
 
 #include <net/ethernet.h>
+#include <netinet/ip.h>
 #include <pcap/pcap.h>
 #include <stdio.h>
 #include <string.h>
