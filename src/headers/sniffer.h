@@ -46,6 +46,9 @@ class Sniffer {
     void Close();
     /* Method to start reading the packets */
     void Read();
+
+    /* Assign custom sniffer struct */
+    void SetSniffer(pcap_t* sniffer);
 };
 
 /* Test function to list all devices */

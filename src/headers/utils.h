@@ -13,7 +13,4 @@ int GetTerminalWidth();
 /* Prints a seperator the given number of times to the console */
 void PrintSeperator(char sep, int count);
 
-/* Converts an int into 2 Bytes Hexadecimal Value */
-int BtoHex2(uint16_t val);
-
 #endif

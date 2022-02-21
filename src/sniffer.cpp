@@ -58,25 +58,26 @@ void PacketHandler(u_char* args, const pcap_pkthdr* header, const u_char* packet
     /* Typecast the value of args from u_char to u_int */
     uint* packet_count = reinterpret_cast<uint*>(args);
     (*packet_count)++;
-    std::cout << "Packet number " << *(packet_count) << ":\n\n";
+    std::cout << "Packet number " << *(packet_count) << "\n\n";
 
-    /* Parse Ethernet header */
-    EthernetLayerFilter eth;
-    eth.Parse(packet, 0);
+    /* Layer Filter Array */
+    std::vector<FilterInterface*> filters = CreateLayerFilterArray();
 
-    /* Print Ethernet Header */
-    eth.Print();
+    /* To store the starting point of the new layer header */
+    uint start = 0;
 
-    /* Parse IP Layer header */
-    NetworkLayerFilter ip;
-    ip.Parse(packet, sizeof(ether_header));
-
-    /* Print Network Header */
-    ip.Print();
-
-    if (*packet_count < PACKET_COUNT) {
-        PrintSeperator('-', GetTerminalWidth());
+    /* Iterate and parse through all Layer Header filters */
+    for (int i = 0; i < filters.size(); i++) {
+        /* Parse the packet from the given starting point and print */
+        filters[i]->Parse(packet, start);
+        filters[i]->Print();
+        start = start + filters[i]->GetHeaderSize();
     }
+
+    /* Free the allocated layer filter pointers */
+    FreeLayerFilterArray(filters);
+
+    PrintSeperator('-', GetTerminalWidth());
 }
 
 void Sniffer::Read() {
@@ -89,8 +90,10 @@ void Sniffer::Read() {
 
     /* Read the specified packets on the opened device and call the handler on each of them */
     pcap_loop(this->device_sniffer_, PACKET_COUNT, PacketHandler, args);
+}
 
-    PrintSeperator('-', GetTerminalWidth());
+void Sniffer::SetSniffer(pcap_t* sniffer) {
+    this->device_sniffer_ = sniffer;
 }
 
 void ListDevices() {

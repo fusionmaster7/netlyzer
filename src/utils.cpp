@@ -28,19 +28,3 @@ void PrintSeperator(char sep, int count) {
 
     std::cout << "\n";
 }
-
-int BtoHex2(uint16_t val) {
-    /* Create a stringstream to write to */
-    std::stringstream ss;
-
-    /* Extract the bytes */
-    int second_byte = (val & 0xFF);
-    int first_byte = (val >> 8) & 0xFF;
-
-    /* Write the bytes to the string stream */
-    ss << std::setw(2) << std::setfill('0') << second_byte;
-    ss << std::setw(2) << std::setfill('0') << first_byte;
-
-    /* Convert string to integer using base 16 */
-    return std::stoi(ss.str(), 0, 16);
-}
