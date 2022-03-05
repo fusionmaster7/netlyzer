@@ -8,6 +8,17 @@
 /* Number of packets to be read */
 const int PACKET_COUNT = 1;
 
+/* ----- Parameter Masks (Each bit denotes a different option) ----- */
+
+/* Mask to check whether interactive mode or not */
+const uint INTERACTIVE_OPTION_MASK = 4;
+
+/* Mask to check whether device has been set or not */
+const uint DEVICE_OPTION_MASK = 3;
+
+/* Mask to check whether filter has been set or not */
+const uint FILTER_OPTION_MASK = 2;
+
 class Sniffer {
    private:
     /* Name of the device to listen to */
@@ -23,22 +34,17 @@ class Sniffer {
     char errbuf_[PCAP_ERRBUF_SIZE];
 
    public:
-    /* Class constructor */
+    /* Default Class constructor */
     Sniffer();
+
+    /* Parameterised Class constructor */
+    Sniffer(pcap_t* sniffer);
 
     /* Gets the device name */
     std::string GetDeviceName();
-    /* Gets the protocol name */
-    std::string GetProtocolName();
-    /* Gets the port number */
-    std::string GetPortNumber();
 
     /* Sets the device name */
     void SetDeviceName(std::string device_name);
-    /* Sets the protocol name */
-    void SetProtocolName(std::string protocol);
-    /* Sets the port number */
-    void SetPortNumber(std::string port);
 
     /* Creates the sniffer device object */
     void Open();

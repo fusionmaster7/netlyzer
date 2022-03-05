@@ -4,28 +4,16 @@ Sniffer::Sniffer() {
     this->device_sniffer_ = nullptr;
 }
 
+Sniffer::Sniffer(pcap_t* sniffer) {
+    this->device_sniffer_ = sniffer;
+}
+
 std::string Sniffer::GetDeviceName() {
     return this->device_name_;
 }
 
-std::string Sniffer::GetProtocolName() {
-    return this->protocol_;
-}
-
-std::string Sniffer::GetPortNumber() {
-    return this->port_;
-}
-
 void Sniffer::SetDeviceName(std::string device_name) {
     this->device_name_ = device_name;
-}
-
-void Sniffer::SetProtocolName(std::string protocol) {
-    this->protocol_ = protocol;
-}
-
-void Sniffer::SetPortNumber(std::string port) {
-    this->port_ = port;
 }
 
 void Sniffer::Open() {

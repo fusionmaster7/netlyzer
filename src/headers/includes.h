@@ -19,8 +19,4 @@
 #include <string>
 #include <vector>
 
-#define LIST_DEVICES "list"
-#define DEVICE_ARG 'd'
-#define FILTER_ARG 'f'
-
 #endif
