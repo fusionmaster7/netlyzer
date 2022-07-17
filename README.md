@@ -10,6 +10,8 @@ The application is currently in CLI format and supports the following features:
    3. Transport Layer
 
 ### Installation Steps
-1. Run the ```build.sh``` script
-2. Run the ```install.sh``` script
-3. Start the application using ```netlyzer -d wlp2s0``` command from anywhere in your terminal.
+Run ```install.sh``` script file
+
+### How to run
+1. Use the ```netlyzer -i``` command to run in interactive mode.
+2. Use the ```netlyzer -d <interface>``` command to run the sniffer on a particular interface.

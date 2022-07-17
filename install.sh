@@ -1,7 +1,9 @@
 #! /bin/bash
 # Install script for netlyzer
 
+sudo apt-get install libpcap-dev
+bash ./build.sh
 cd build
 cp ./netlyzer /usr/local/bin
-cd ..
-sudo ln -sf ./build/netlyzer /usr/local/bin/netlyzer
+CURRENT_PATH=`pwd`
+sudo ln -sf $CURRENT_PATH/netlyzer /usr/local/bin/netlyzer
