@@ -108,7 +108,25 @@ int main(int argc, char* argv[]) {
             std::cout << "Enter device name: ";
             std::cin >> device_name;
 
+            std::cout << "Do you want to enter a filter expression? (y/n) ";
+            std::cin >> resp;
+
+            resp = tolower(resp);
+
+            if (resp == 'y') {
+                std::cout << "Enter the filter expression: ";
+                std::cin >> filter_exp;
+            }
+
             sniffer.SetDeviceName(device_name);
+
+            if (filter_exp != "") {
+                /*To get network address and mask for device */
+                sniffer.GetNetMask();
+
+                /* To compile and set filters */
+                sniffer.SetFilter(filter_exp);
+            }
 
             sniffer.Open();
             sniffer.Read();
@@ -143,7 +161,7 @@ int main(int argc, char* argv[]) {
 
             sniffer.Close();
         } else {
-            std::cerr << "Please select a device an0d try again.\n";
+            std::cerr << "Please select a device and try again.\n";
             exit(1);
         }
     }

@@ -23,10 +23,12 @@ class Sniffer {
    private:
     /* Name of the device to listen to */
     std::string device_name_;
-    /* Name of the protocol to sniff */
-    std::string protocol_;
-    /* Port on which we have to listen */
-    std::string port_;
+
+    /* Traffic Filter Expression Structure */
+    bpf_program filter_;
+
+    /* Pair to hold network address and mask of device */
+    std::pair<bpf_u_int32, bpf_u_int32> device_network_;
 
     /* Actual sniffer structure */
     pcap_t* device_sniffer_;
@@ -43,6 +45,9 @@ class Sniffer {
     /* Gets the device name */
     std::string GetDeviceName();
 
+    /* To find network address and mask of device */
+    void GetNetMask();
+
     /* Sets the device name */
     void SetDeviceName(std::string device_name);
 
@@ -55,6 +60,9 @@ class Sniffer {
 
     /* Assign custom sniffer struct */
     void SetSniffer(pcap_t* sniffer);
+
+    /* To compile and set device filter */
+    void SetFilter(std::string filter_exp);
 };
 
 /* Test function to list all devices */

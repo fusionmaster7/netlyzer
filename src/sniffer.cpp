@@ -84,6 +84,36 @@ void Sniffer::SetSniffer(pcap_t* sniffer) {
     this->device_sniffer_ = sniffer;
 }
 
+void Sniffer::GetNetMask() {
+    /* Create network and mask variables */
+    bpf_u_int32 net;
+    bpf_u_int32 mask;
+
+    if (pcap_lookupnet(this->device_name_.c_str(), &net, &mask, this->errbuf_) == -1) {
+        std::cerr << "Error in obtaining network address for device. Following error encountered:\n";
+        puts(this->errbuf_);
+        exit(1);
+    }
+
+    /* Set the network and mask values */
+    this->device_network_.first = net;
+    this->device_network_.second = mask;
+}
+
+void Sniffer::SetFilter(std::string filter_exp) {
+    /* Compile the filter and then store the filter expression in the assigned structure */
+    if (pcap_compile(this->device_sniffer_, &this->filter_, filter_exp.c_str(), 0, this->device_network_.first) == -1) {
+        std::cerr << "Could not compile filter " << filter_exp << "  for device " << this->device_name_ << "\n";
+        exit(1);
+    }
+
+    /* Set the compiled filter expression */
+    if (pcap_setfilter(this->device_sniffer_, &this->filter_) == -1) {
+        std::cerr << "Could not set filter " << filter_exp << " for device " << this->device_name_ << "\n";
+        exit(1);
+    }
+}
+
 void ListDevices() {
     /* Head of linked list of device structs */
     pcap_if_t* head;

@@ -17,10 +17,17 @@ void EthernetLayerFilter::Print() {
     std::cout << "Source MAC address is " << ConvertToHexadecimal(this->eth_struct_->ether_shost, ETH_ALEN) << "\n";
     std::cout << "Destination MAC address is " << ConvertToHexadecimal(this->eth_struct_->ether_dhost, ETH_ALEN) << "\n";
 
-    if (ntohs(this->eth_struct_->ether_type) == ETHERTYPE_IP) {
-        std::cout << "Ethertype is IPv4"
-                  << "\n";
+    std::string ether_type;
+
+    uint16_t ether_type_value = ntohs(this->eth_struct_->ether_type);
+
+    if (ether_type_value == ETHERTYPE_ARP) {
+        ether_type = "ARP";
+    } else if (ether_type_value == ETHERTYPE_IP) {
+        ether_type = "IPv4";
     }
+
+    std::cout << "Ethertype is " << ether_type << "\n";
 
     std::cout << "\n";
 }
