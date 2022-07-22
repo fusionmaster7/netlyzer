@@ -10,6 +10,9 @@ const int PACKET_COUNT = 1;
 
 /* ----- Parameter Masks (Each bit denotes a different option) ----- */
 
+/* Mask to check whether offline mode or not */
+const uint OFFLINE_MODE_MASK = 5;
+
 /* Mask to check whether interactive mode or not */
 const uint INTERACTIVE_OPTION_MASK = 4;
 
@@ -32,6 +35,7 @@ class Sniffer {
 
     /* Actual sniffer structure */
     pcap_t* device_sniffer_;
+
     /* Error buffer */
     char errbuf_[PCAP_ERRBUF_SIZE];
 
@@ -48,21 +52,26 @@ class Sniffer {
     /* To find network address and mask of device */
     void GetNetMask();
 
-    /* Sets the device name */
-    void SetDeviceName(std::string device_name);
-
-    /* Creates the sniffer device object */
-    void Open();
-    /* Close the sniffer device object */
-    void Close();
-    /* Method to start reading the packets */
-    void Read();
-
     /* Assign custom sniffer struct */
     void SetSniffer(pcap_t* sniffer);
 
     /* To compile and set device filter */
     void SetFilter(std::string filter_exp);
+
+    /* Sets the device name */
+    void SetDeviceName(std::string device_name);
+
+    /* Creates the sniffer device object */
+    void CreateSniffer();
+
+    /* Creates and stores sniffer from custom capture file */
+    void CreateSnifferFromFile(std::string file_path);
+
+    /* Method to start reading the packets */
+    void Read();
+
+    /* Close the sniffer device object */
+    void Close();
 };
 
 /* Test function to list all devices */

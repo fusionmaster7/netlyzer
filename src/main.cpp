@@ -6,8 +6,21 @@
         a. Interactive mode (-i)
         b. Online or Offline mode (-o or -d)
         c. Filter expressions (-f)
+    2. Rewrite Sniffer object building code
     2. Add options to dump capture file
 */
+
+/* Struct to hold Arg values */
+struct ConfigValues {
+    /* Device Name */
+    std::string device_name_;
+    /* Filter Expression */
+    std::string filter_exp_;
+    /* Path to read packets from in offline mode */
+    std::string capture_file_path_;
+    /* Path to export capture */
+    std::string dump_file_path_;
+};
 
 /* Function to copy char pointer into the passed string */
 void CopyArg(std::string& param, char* arg) {
@@ -28,8 +41,8 @@ void SetOption(uint& config, const uint param_mask) {
     config = (config | (1 << param_mask));
 }
 
-/* Function to parse command line options, set them into the config number and and return an object of Sniffer class */
-Sniffer ParseCommand(int argc, char* argv[], uint& config, std::string& device_name, std::string filter_exp) {
+/* Function to parse command line options and set them into the config number */
+void ParseCommand(int argc, char* argv[], uint& config, ConfigValues& configValues) {
     if (argc < 2) {
         std::cerr << "Please enter options and try again.\n";
         exit(1);
@@ -47,6 +60,8 @@ Sniffer ParseCommand(int argc, char* argv[], uint& config, std::string& device_n
 
             /* Interactive mode */
             if (ch == 'i') {
+                /* Reset all other flags */
+                config = (0 << 7);
                 SetOption(config, INTERACTIVE_OPTION_MASK);
 
                 /* There should not be any other options after interactive mode flag */
@@ -60,110 +75,86 @@ Sniffer ParseCommand(int argc, char* argv[], uint& config, std::string& device_n
                 i++;
 
                 /* Copy value of arg in device string */
-                CopyArg(device_name, argv[i]);
+                CopyArg(configValues.device_name_, argv[i]);
             } else if (ch == 'f') {
                 SetOption(config, FILTER_OPTION_MASK);
                 i++;
 
                 /* Copy value of arg in filter expression string */
-                CopyArg(filter_exp, argv[i]);
+                CopyArg(configValues.filter_exp_, argv[i]);
+            } else if (ch == 'm') {
+                SetOption(config, OFFLINE_MODE_MASK);
+                i++;
+
+                /* Copy value in capture file import string */
+                CopyArg(configValues.capture_file_path_, argv[i]);
             }
         }
 
         i++;
     }
+}
 
-    /* Create an object of the sniffer class */
+/* Build the sniffer object based on Args passed */
+Sniffer BuildSniffer(uint& config, ConfigValues& configValues) {
+    /* Sniffer Object. We'll build the object progressively according to options set */
     Sniffer sniffer;
+
+    /* Check if Interactive Mode has been set or not */
+    if (CheckOption(config, INTERACTIVE_OPTION_MASK)) {
+        char ch;
+
+        std::cout << "Do you want to start the application in online mode? (y/n) ";
+        std::cin >> ch;
+
+        if (tolower(ch) == 'y') {
+            SetOption(config, DEVICE_OPTION_MASK);
+            std::cout << "Enter the device(interface) name: ";
+            std::cin >> configValues.device_name_;
+        } else {
+            SetOption(config, OFFLINE_MODE_MASK);
+            std::cout << "Enter the capture file path: ";
+            std::cin >> configValues.capture_file_path_;
+        }
+    }
+
+    /* Check for conflicts */
+    if (CheckOption(config, DEVICE_OPTION_MASK) && CheckOption(config, OFFLINE_MODE_MASK)) {
+        std::cerr << "Please enter only one option: -d for Online Mode, -m for Offline Mode\n";
+        exit(1);
+    }
+
+    /* If in online mode, create the device sniffer */
+    if (CheckOption(config, DEVICE_OPTION_MASK)) {
+        sniffer.SetDeviceName(configValues.device_name_);
+        sniffer.CreateSniffer();
+    }
+
+    /* If in online mode, set sniffer from file */
+    if (CheckOption(config, OFFLINE_MODE_MASK)) {
+        sniffer.CreateSnifferFromFile(configValues.capture_file_path_);
+    }
 
     return sniffer;
 }
 
 int main(int argc, char* argv[]) {
     /* Configuration Number. We can find out whether certain params have been set using their masks. */
-    uint config = (0 << 4);
+    uint config = (0 << 7);
 
-    /* String to store device name */
-    std::string device_name;
+    /* Config Values Struct */
+    ConfigValues configValues;
 
-    /* String to store filter expression */
-    std::string filter_exp;
+    /* Parse the args, set flags and store arg values */
+    ParseCommand(argc, argv, config, configValues);
 
-    Sniffer sniffer = ParseCommand(argc, argv, config, device_name, filter_exp);
+    Sniffer sniffer = BuildSniffer(config, configValues);
 
-    /* Buffer to store error */
-    char err_buf[BUFSIZ];
+    sniffer.Read();
 
-    /* Check if the application is running in interactive mode */
-    if (CheckOption(config, INTERACTIVE_OPTION_MASK)) {
-        std::cout << "Do you want to start the application in Live(online) Mode? (y/n) ";
-        char resp;
-
-        /* Take user response and convert to lowercase */
-        std::cin >> resp;
-        resp = tolower(resp);
-
-        if (resp == 'y') {
-            /* Start the tool in online mode */
-            std::cout << "Enter device name: ";
-            std::cin >> device_name;
-
-            std::cout << "Do you want to enter a filter expression? (y/n) ";
-            std::cin >> resp;
-
-            resp = tolower(resp);
-
-            if (resp == 'y') {
-                std::cout << "Enter the filter expression: ";
-                std::cin >> filter_exp;
-            }
-
-            sniffer.SetDeviceName(device_name);
-
-            if (filter_exp != "") {
-                /*To get network address and mask for device */
-                sniffer.GetNetMask();
-
-                /* To compile and set filters */
-                sniffer.SetFilter(filter_exp);
-            }
-
-            sniffer.Open();
-            sniffer.Read();
-            sniffer.Close();
-
-        } else {
-            /* Start the tool in offline mode */
-            std::string file_name;
-            std::cout << "Enter name of dump file: ";
-            std::cin >> file_name;
-
-            pcap_t* offline_sniffer = pcap_open_offline(file_name.c_str(), err_buf);
-
-            /* Check if file opened successfully */
-            if (!offline_sniffer) {
-                std::cerr << "Error opening dump file. Following error encountered:\n";
-                puts(err_buf);
-                exit(1);
-            }
-
-            /* Set offline sniffer */
-            sniffer.SetSniffer(offline_sniffer);
-            sniffer.Read();
-        }
-    } else {
-        /* Check whether device flag has been set or not */
-        if (CheckOption(config, DEVICE_OPTION_MASK)) {
-            /* Open device and start reading */
-            sniffer.SetDeviceName(device_name);
-            sniffer.Open();
-            sniffer.Read();
-
-            sniffer.Close();
-        } else {
-            std::cerr << "Please select a device and try again.\n";
-            exit(1);
-        }
+    /* Close the device sniffer if running in online mode */
+    if (CheckOption(config, DEVICE_OPTION_MASK)) {
+        sniffer.Close();
     }
 
     return 0;

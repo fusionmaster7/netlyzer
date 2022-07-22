@@ -16,7 +16,7 @@ void Sniffer::SetDeviceName(std::string device_name) {
     this->device_name_ = device_name;
 }
 
-void Sniffer::Open() {
+void Sniffer::CreateSniffer() {
     /* Open the device and assign the value to sniffer struct */
     this->device_sniffer_ = pcap_open_live(this->device_name_.c_str(), BUFSIZ, 1, 1000, this->errbuf_);
 
@@ -35,6 +35,10 @@ void Sniffer::Open() {
 
     std::cout << "Opened device " << this->device_name_ << "\n";
     PrintSeperator('-', GetTerminalWidth());
+}
+
+void Sniffer::CreateSnifferFromFile(std::string file_path) {
+    this->device_sniffer_ = pcap_open_offline(file_path.c_str(), this->errbuf_);
 }
 
 void Sniffer::Close() {
