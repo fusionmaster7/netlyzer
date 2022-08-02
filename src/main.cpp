@@ -1,26 +1,11 @@
 #include "./headers/includes.h"
 #include "./headers/sniffer.h"
+#include "./headers/utils.h"
 
-/*TODO:
-    1. Add flags for the following:
-        a. Interactive mode (-i)
-        b. Online or Offline mode (-o or -d)
-        c. Filter expressions (-f)
-    2. Rewrite Sniffer object building code
-    2. Add options to dump capture file
-*/
-
-/* Struct to hold Arg values */
-struct ConfigValues {
-    /* Device Name */
-    std::string device_name_;
-    /* Filter Expression */
-    std::string filter_exp_;
-    /* Path to read packets from in offline mode */
-    std::string capture_file_path_;
-    /* Path to export capture */
-    std::string dump_file_path_;
-};
+/**
+ * TODO: Add options to dump file using the pcap_dump method.
+ * TODO: Add filter flag
+ */
 
 /* Function to copy char pointer into the passed string */
 void CopyArg(std::string& param, char* arg) {
@@ -42,7 +27,7 @@ void SetOption(uint& config, const uint param_mask) {
 }
 
 /* Function to parse command line options and set them into the config number */
-void ParseCommand(int argc, char* argv[], uint& config, ConfigValues& configValues) {
+void ParseCommand(int argc, char* argv[], uint& config, ConfigValues& config_values) {
     if (argc < 2) {
         std::cerr << "Please enter options and try again.\n";
         exit(1);
@@ -75,19 +60,29 @@ void ParseCommand(int argc, char* argv[], uint& config, ConfigValues& configValu
                 i++;
 
                 /* Copy value of arg in device string */
-                CopyArg(configValues.device_name_, argv[i]);
+                CopyArg(config_values.device_name_, argv[i]);
             } else if (ch == 'f') {
                 SetOption(config, FILTER_OPTION_MASK);
                 i++;
 
                 /* Copy value of arg in filter expression string */
-                CopyArg(configValues.filter_exp_, argv[i]);
+                CopyArg(config_values.filter_exp_, argv[i]);
             } else if (ch == 'm') {
                 SetOption(config, OFFLINE_MODE_MASK);
                 i++;
 
                 /* Copy value in capture file import string */
-                CopyArg(configValues.capture_file_path_, argv[i]);
+                CopyArg(config_values.capture_file_path_, argv[i]);
+            } else if (ch == 'e') {
+                SetOption(config, DUMP_FILE_MASK);
+                i++;
+
+                /* Copy value in dump file path string */
+                CopyArg(config_values.dump_file_path_, argv[i]);
+            } else if (ch == 'c') {
+                SetOption(config, PACKET_COUNT_MASK);
+                i++;
+                config_values.packets_to_read_ = atoi(argv[i]);
             }
         }
 
@@ -96,7 +91,7 @@ void ParseCommand(int argc, char* argv[], uint& config, ConfigValues& configValu
 }
 
 /* Build the sniffer object based on Args passed */
-Sniffer BuildSniffer(uint& config, ConfigValues& configValues) {
+Sniffer BuildSniffer(uint& config, ConfigValues& config_values) {
     /* Sniffer Object. We'll build the object progressively according to options set */
     Sniffer sniffer;
 
@@ -110,11 +105,11 @@ Sniffer BuildSniffer(uint& config, ConfigValues& configValues) {
         if (tolower(ch) == 'y') {
             SetOption(config, DEVICE_OPTION_MASK);
             std::cout << "Enter the device(interface) name: ";
-            std::cin >> configValues.device_name_;
+            std::cin >> config_values.device_name_;
         } else {
             SetOption(config, OFFLINE_MODE_MASK);
             std::cout << "Enter the capture file path: ";
-            std::cin >> configValues.capture_file_path_;
+            std::cin >> config_values.capture_file_path_;
         }
     }
 
@@ -126,31 +121,51 @@ Sniffer BuildSniffer(uint& config, ConfigValues& configValues) {
 
     /* If in online mode, create the device sniffer */
     if (CheckOption(config, DEVICE_OPTION_MASK)) {
-        sniffer.SetDeviceName(configValues.device_name_);
+        sniffer.SetDeviceName(config_values.device_name_);
         sniffer.CreateSniffer();
     }
 
     /* If in online mode, set sniffer from file */
     if (CheckOption(config, OFFLINE_MODE_MASK)) {
-        sniffer.CreateSnifferFromFile(configValues.capture_file_path_);
+        sniffer.CreateSnifferFromFile(config_values.capture_file_path_);
     }
 
     return sniffer;
 }
 
+// Set arguments to be passed in the callback function for reading packets
+void SetCallbackArgs(uint& config, ConfigValues& config_values, PacketArgs& args) {
+    args.packet_count_ = 0;
+    args.dump_file_path_ = "";
+
+    // If dump file flag has been set, set the path in config args
+    if (CheckOption(config, DUMP_FILE_MASK)) {
+        args.dump_file_path_ = config_values.dump_file_path_;
+    }
+
+    // If packet count has not been specified, set the default packet count
+    if (!CheckOption(config, PACKET_COUNT_MASK)) {
+        config_values.packets_to_read_ = 1;
+    }
+}
+
 int main(int argc, char* argv[]) {
     /* Configuration Number. We can find out whether certain params have been set using their masks. */
-    uint config = (0 << 7);
+    uint config = (0 << CONFIG_BIT_SIZE);
 
     /* Config Values Struct */
-    ConfigValues configValues;
+    ConfigValues config_values;
 
     /* Parse the args, set flags and store arg values */
-    ParseCommand(argc, argv, config, configValues);
+    ParseCommand(argc, argv, config, config_values);
 
-    Sniffer sniffer = BuildSniffer(config, configValues);
+    Sniffer sniffer = BuildSniffer(config, config_values);
 
-    sniffer.Read();
+    PacketArgs args;
+
+    SetCallbackArgs(config, config_values, args);
+
+    sniffer.Read(PacketHandler, args, config_values.packets_to_read_);
 
     /* Close the device sniffer if running in online mode */
     if (CheckOption(config, DEVICE_OPTION_MASK)) {

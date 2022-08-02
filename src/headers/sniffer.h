@@ -5,10 +5,16 @@
 #include "network_filters.h"
 #include "utils.h"
 
-/* Number of packets to be read */
-const int PACKET_COUNT = 1;
+// Number of bits required to denote the configuration bitset */
+const uint CONFIG_BIT_SIZE = 10;
 
 /* ----- Parameter Masks (Each bit denotes a different option) ----- */
+
+/* Mask to check whether packet count has been specified or not */
+const uint PACKET_COUNT_MASK = 7;
+
+/* Mask to check whether to export file or not */
+const uint DUMP_FILE_MASK = 6;
 
 /* Mask to check whether offline mode or not */
 const uint OFFLINE_MODE_MASK = 5;
@@ -67,8 +73,9 @@ class Sniffer {
     /* Creates and stores sniffer from custom capture file */
     void CreateSnifferFromFile(std::string file_path);
 
-    /* Method to start reading the packets */
-    void Read();
+    // Method to start reading the packets
+    // target_packets is the number of packets to read
+    void Read(pcap_handler packet_handler, PacketArgs packet_args, int target_packets);
 
     /* Close the sniffer device object */
     void Close();
@@ -76,8 +83,5 @@ class Sniffer {
 
 /* Test function to list all devices */
 void ListDevices();
-
-/* Callback function to handle packets */
-void PacketHandler(u_char* args, const pcap_pkthdr* header, const u_char* packet);
 
 #endif

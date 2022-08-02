@@ -46,42 +46,16 @@ void Sniffer::Close() {
     std::cout << "Closed sniffer for device " << this->device_name_ << "\n";
 }
 
-void PacketHandler(u_char* args, const pcap_pkthdr* header, const u_char* packet) {
-    /* Typecast the value of args from u_char to u_int */
-    uint* packet_count = reinterpret_cast<uint*>(args);
-    (*packet_count)++;
-    std::cout << "Packet number " << *(packet_count) << "\n\n";
-
-    /* Layer Filter Array */
-    std::vector<FilterInterface*> filters = CreateLayerFilterArray();
-
-    /* To store the starting point of the new layer header */
-    uint start = 0;
-
-    /* Iterate and parse through all Layer Header filters */
-    for (int i = 0; i < filters.size(); i++) {
-        /* Parse the packet from the given starting point and print */
-        filters[i]->Parse(packet, start);
-        filters[i]->Print();
-        start = start + filters[i]->GetHeaderSize();
-    }
-
-    /* Free the allocated layer filter pointers */
-    FreeLayerFilterArray(filters);
-
-    PrintSeperator('-', GetTerminalWidth());
-}
-
-void Sniffer::Read() {
+void Sniffer::Read(pcap_handler packet_handler, PacketArgs packet_args, int target_packets) {
     /* Pointer to the packet count variable */
     uint packet_count = 0;
-    uint* packet_count_ptr = &packet_count;
 
-    /* Typecast to pass as args in the callback function */
-    u_char* args = reinterpret_cast<u_char*>(packet_count_ptr);
+    // packetArgs are the additional arguments that need to be passed to the function.
+    // We need to cast it to the appropriate type to pass to the callback
+    u_char* args = reinterpret_cast<u_char*>(&packet_args);
 
     /* Read the specified packets on the opened device and call the handler on each of them */
-    pcap_loop(this->device_sniffer_, PACKET_COUNT, PacketHandler, args);
+    pcap_loop(this->device_sniffer_, target_packets, packet_handler, args);
 }
 
 void Sniffer::SetSniffer(pcap_t* sniffer) {
