@@ -77,6 +77,9 @@ class Sniffer {
     // target_packets is the number of packets to read
     void Read(pcap_handler packet_handler, PacketArgs packet_args, int target_packets);
 
+    // Method to write to dump file
+    void WriteToFile(PacketArgs packet_args);
+
     /* Close the sniffer device object */
     void Close();
 };

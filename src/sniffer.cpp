@@ -50,12 +50,34 @@ void Sniffer::Read(pcap_handler packet_handler, PacketArgs packet_args, int targ
     /* Pointer to the packet count variable */
     uint packet_count = 0;
 
-    // packetArgs are the additional arguments that need to be passed to the function.
+    // packet_args are the additional arguments that need to be passed to the function.
     // We need to cast it to the appropriate type to pass to the callback
     u_char* args = reinterpret_cast<u_char*>(&packet_args);
 
     /* Read the specified packets on the opened device and call the handler on each of them */
     pcap_loop(this->device_sniffer_, target_packets, packet_handler, args);
+}
+
+void Sniffer::WriteToFile(PacketArgs packet_args) {
+    if (packet_args.dump_file_path_.compare("") == 0) {
+        std::cerr << "Please enter the file path.\n\n";
+        return;
+    }
+
+    pcap_dumper_t* pd = pcap_dump_open(this->device_sniffer_, packet_args.dump_file_path_.c_str());
+
+    if (pd == NULL) {
+        std::cerr << "Could not open dump file. Please check path and try again.\n\n";
+        return;
+    }
+
+    int captured_packet_count = pcap_dispatch(this->device_sniffer_, packet_args.packet_count_, &pcap_dump, (u_char*)pd);
+
+    if (captured_packet_count < 0) {
+        std::cerr << "Error reading packets from interface.\n\n";
+    }
+
+    pcap_dump_close(pd);
 }
 
 void Sniffer::SetSniffer(pcap_t* sniffer) {

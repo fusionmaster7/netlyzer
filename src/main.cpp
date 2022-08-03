@@ -3,8 +3,8 @@
 #include "./headers/utils.h"
 
 /**
- * TODO: Add options to dump file using the pcap_dump method.
- * TODO: Add filter flag
+ * TODO: Add a file check middleware which verifies that the file path directory exists or not and if not create it.
+ * TODO: Add filter flag.
  */
 
 /* Function to copy char pointer into the passed string */
@@ -165,7 +165,12 @@ int main(int argc, char* argv[]) {
 
     SetCallbackArgs(config, config_values, args);
 
-    sniffer.Read(PacketHandler, args, config_values.packets_to_read_);
+    // Check if data needs to be exported to a file or displayed on the console.
+    if (CheckOption(config, DUMP_FILE_MASK)) {
+        sniffer.WriteToFile(args);
+    } else {
+        sniffer.Read(PacketHandler, args, config_values.packets_to_read_);
+    }
 
     /* Close the device sniffer if running in online mode */
     if (CheckOption(config, DEVICE_OPTION_MASK)) {
