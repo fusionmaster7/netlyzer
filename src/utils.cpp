@@ -55,3 +55,25 @@ void PacketHandler(u_char* args, const pcap_pkthdr* header, const u_char* packet
 
     PrintSeperator('-', GetTerminalWidth());
 }
+
+uint CheckFilePath(std::string file_path) {
+    size_t index = file_path.find_last_of('/');
+    // Extract the directory path and file name
+    std::string directory_path = file_path.substr(0, index);
+    std::string file_name = file_path.substr(index + 1, file_path.size() - index);
+
+    // Check whether directory exists or not
+    struct stat buffer;
+    if (stat(directory_path.c_str(), &buffer) != 0) {
+        std::cout << "Directory does not exist, creating directory " << directory_path << "\n\n";
+
+        if (mkdir(directory_path.c_str(), 0777) == -1) {
+            std::cerr << "Could not create directory.\n\n";
+            return -1;
+        } else {
+            std::cout << "Created directory " << directory_path << "\n\n";
+        }
+    }
+
+    return 0;
+}

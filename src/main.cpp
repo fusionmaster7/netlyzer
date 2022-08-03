@@ -167,6 +167,11 @@ int main(int argc, char* argv[]) {
 
     // Check if data needs to be exported to a file or displayed on the console.
     if (CheckOption(config, DUMP_FILE_MASK)) {
+        // Check if file path exists or not, if not then create it.
+        // -1 means the file path could not be created.
+        if (CheckFilePath(args.dump_file_path_) == -1) {
+            return -1;
+        }
         sniffer.WriteToFile(args);
     } else {
         sniffer.Read(PacketHandler, args, config_values.packets_to_read_);

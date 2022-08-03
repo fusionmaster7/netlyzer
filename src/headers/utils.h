@@ -39,4 +39,7 @@ void PrintSeperator(char sep, int count);
 /* Create a packet handler function from passed function args */
 void PacketHandler(u_char* args, const pcap_pkthdr* header, const u_char* packet);
 
+/* Checks whether the given path exists or not. If not then creates the path */
+uint CheckFilePath(std::string file_path);
+
 #endif
